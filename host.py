@@ -17,6 +17,7 @@ bot = commands.Bot(
     intents=intents,
     help_command=None
 )
+
 music_queue = []
 
 current_song = None
@@ -39,14 +40,19 @@ FFMPEG_OPTIONS = {
     "options": "-vn"
 }
 
-# ---------------- YTDLP ----------------
+# ---------------- YTDLP (FIXED) ----------------
 
 ytdl = yt_dlp.YoutubeDL({
     "format": "bestaudio/best",
     "quiet": True,
     "noplaylist": True,
     "default_search": "ytsearch",
-    "source_address": "0.0.0.0"
+    "source_address": "0.0.0.0",
+    "extractor_args": {
+        "youtube": {
+            "player_client": ["android"]
+        }
+    }
 })
 
 # ================= STATUS ROTATION =================
@@ -217,7 +223,7 @@ async def play_next(ctx):
     song_duration = duration
     song_start = time.time()
 
-    data = ytdl.extract_info(url,download=False)
+    data = await bot.loop.run_in_executor(None, lambda: ytdl.extract_info(url, download=False))
     stream = data["url"]
 
     source = discord.PCMVolumeTransformer(
@@ -264,7 +270,7 @@ async def play(ctx, *, query):
 
     await ctx.send(f"🔍 Searching **{query}**...")
 
-    info = ytdl.extract_info(f"ytsearch1:{query}", download=False)
+    info = await bot.loop.run_in_executor(None, lambda: ytdl.extract_info(f"ytsearch1:{query}", download=False))
 
     data = info["entries"][0]
 
